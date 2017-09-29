@@ -67,20 +67,8 @@ class StatsTaskService {
         $history->setDate($when);
         $history->setNbUsers($this->statService->countUsers());
         $history->setDefaultQuota($globalStorageInfo['defaultQuota']);
-        $history->setNbFolders($globalStorageInfo['totalFolders']);
-        $history->setNbFiles($globalStorageInfo['totalFiles']);
-        $history->setNbShares($globalStorageInfo['totalShares']);
         $history->setTotalUsedSpace($globalStorageInfo['totalSize']);
         $history->setSizePerUser($globalStorageInfo['sizePerUser']);
-        $history->setFoldersPerUser($globalStorageInfo['foldersPerUser']);
-        $history->setFilesPerUser($globalStorageInfo['filesPerUser']);
-        $history->setSharesPerUser($globalStorageInfo['sharesPerUser']);
-        $history->setSizePerFolder($globalStorageInfo['sizePerFolder']);
-        $history->setFilesPerFolder($globalStorageInfo['filesPerFolder']);
-        $history->setSizePerFile($globalStorageInfo['sizePerFile']);
-        $history->setStdvFilesPerUser($globalStorageInfo['stdvNbFilesPerUser']);
-        $history->setStdvFoldersPerUser($globalStorageInfo['stdvNbFoldersPerUser']);
-        $history->setStdvSharesPerUser($globalStorageInfo['stdvNbSharesPerUser']);
 
         return $history;
     }
@@ -98,16 +86,7 @@ class StatsTaskService {
         $historyByGroup->setDate($when);
         $historyByGroup->setTotalUsedSpace($groupInfo['filesize']);
         $historyByGroup->setNbUsers($groupInfo['nbUsers']);
-        $historyByGroup->setNbFolders($groupInfo['nbFolders']);
-        $historyByGroup->setNbFiles($groupInfo['nbFiles']);
-        $historyByGroup->setNbShares($groupInfo['nbShares']);
         $historyByGroup->setSizePerUser($groupInfo['sizePerUser']);
-        $historyByGroup->setFilesPerUser($groupInfo['filesPerUser']);
-        $historyByGroup->setFoldersPerUser($groupInfo['foldersPerUser']);
-        $historyByGroup->setSharesPerUser($groupInfo['sharesPerUser']);
-        $historyByGroup->setSizePerFolder($groupInfo['sizePerFolder']);
-        $historyByGroup->setFilesPerFolder($groupInfo['filesPerFolder']);
-        $historyByGroup->setSizePerFile($groupInfo['sizePerFile']);
 
         return $historyByGroup;
     }

@@ -11,6 +11,7 @@
 namespace OCA\Dashboard\Service;
 
 use OCA\Dashboard\Lib\Helper;
+use \OCP\IDBConnection;
 
 class PseudoUser
 {
@@ -34,11 +35,13 @@ class StatService
     protected $rootStorage;
     protected $datas;
     protected $loggerService;
+    protected $db;
 
-    public function __construct($userManager, $rootStorage, LoggerService $loggerService) {
+    public function __construct($userManager, $rootStorage, LoggerService $loggerService, IDBConnection $db) {
         $this->userManager = $userManager;
         $this->rootStorage = $rootStorage;
         $this->loggerService = $loggerService;
+        $this->db = $db;
 
         $this->datas = array();
     }
@@ -75,16 +78,8 @@ class StatService
     public function getGlobalStorageInfo() {
         $view = new \OC\Files\View();
         $stats = array();
-        $stats['totalFiles'] = 0;
-        $stats['totalFolders'] = 0;
-        $stats['totalShares'] = 0;
         $stats['totalSize'] = 0;
         $stats['defaultQuota'] = \OCP\Util::computerFileSize(\OCP\Config::getAppValue('files', 'default_quota', 'none'));
-
-        // initialize variances
-        $nbFoldersVariance = new Variance;
-        $nbFilesVariance = new Variance;
-        $nbSharesVariance = new Variance;
 
         $dataRoot = $this->getUserDataDir();
 
@@ -99,31 +94,13 @@ class StatService
             $stats['groups'] = array();
         }
 
-        // 'users' is a temporary container, won't be send back
-        // $stats['users'] = array();
-
         $output = $this->loggerService->getOutput();
 
         foreach ($users as $uid) {
             $time_start = microtime(true);
             $date_start = date('H:i:s');
 
-            //$userDirectory = $this->rootStorage . '/' . $uid . '/files';
-            $userDirectory = '/' . $uid . '/files';
-
-            if (!is_readable($dataRoot . $userDirectory)) {
-                continue;
-            }
-
-            // $stats['users'][$uid] = array();
-            // $stats['users'][$uid]['nbFiles'] = 0;
-            // $stats['users'][$uid]['nbFolders'] = 0;
-            // $stats['users'][$uid]['nbShares'] = 0;
-            // $stats['users'][$uid]['filesize'] = 0;
             $user = array();
-            $user['nbFiles'] = 0;
-            $user['nbFolders'] = 0;
-            $user['nbShares'] = 0;
             $user['filesize'] = 0;
 
             // group stats ?
@@ -136,9 +113,6 @@ class StatService
                     if (!isset($stats['groups'][$group])) {
                         $stats['groups'][$group] = array();
                         $stats['groups'][$group]['nbUsers'] = 0;
-                        $stats['groups'][$group]['nbFiles'] = 0;
-                        $stats['groups'][$group]['nbFolders'] = 0;
-                        $stats['groups'][$group]['nbShares'] = 0;
                         $stats['groups'][$group]['filesize'] = 0;
                     }
                     $stats['groups'][$group]['nbUsers']++;
@@ -146,41 +120,14 @@ class StatService
             }
 
             // extract datas
-            // $this->getFilesStat($view, $userDirectory, $stats['users'][$uid]);
-            $this->getFilesStat($view, $userDirectory, $user);
+            $this->getFilesStat($uid, $user);
 
             // files stats
-            // $stats['totalFolders'] += $stats['users'][$uid]['nbFolders'];
-            $stats['totalFolders'] += $user['nbFolders'];
-            // $stats['totalFiles'] += $stats['users'][$uid]['nbFiles'];
-            $stats['totalFiles'] += $user['nbFiles'];
-            // $stats['totalSize'] += $stats['users'][$uid]['filesize'];
             $stats['totalSize'] += $user['filesize'];
-
-            // shares
-            // $stats['users'][$uid]['nbShares'] = $this->getSharesStats($uid);
-            $user['nbShares'] = $this->getSharesStats($uid);
-            // $stats['totalShares'] += $stats['users'][$uid]['nbShares'];
-            $stats['totalShares'] += $user['nbShares'];
-
-            // variance evolutions
-            // $nbFoldersVariance->addValue($stats['users'][$uid]['nbFolders']);
-            $nbFoldersVariance->addValue($user['nbFolders']);
-            // $nbFilesVariance->addValue($stats['users'][$uid]['nbFiles']);
-            $nbFilesVariance->addValue($user['nbFiles']);
-            // $nbSharesVariance->addValue($stats['users'][$uid]['nbShares']);
-            $nbSharesVariance->addValue($user['nbShares']);
 
             // groups stats
             if ($statsByGroup) {
                 foreach($groupList as $group) {
-                    // $stats['groups'][$group]['nbFiles'] += $stats['users'][$uid]['nbFiles'];
-                    $stats['groups'][$group]['nbFiles'] += $user['nbFiles'];
-                    // $stats['groups'][$group]['nbFolders'] += $stats['users'][$uid]['nbFolders'];
-                    $stats['groups'][$group]['nbFolders'] += $user['nbFolders'];
-                    // $stats['groups'][$group]['nbShares'] += $stats['users'][$uid]['nbShares'];
-                    $stats['groups'][$group]['nbShares'] += $user['nbShares'];
-                    // $stats['groups'][$group]['filesize'] += $stats['users'][$uid]['filesize'];
                     $stats['groups'][$group]['filesize'] += $user['filesize'];
                 }
             }
@@ -193,63 +140,25 @@ class StatService
         }
 
         // some basic stats
-        $stats['filesPerUser'] = ($this->countUsers() == 0) ? $stats['totalFiles'] : $stats['totalFiles'] / $this->countUsers();
-        $stats['filesPerFolder'] = ($stats['totalFolders'] == 0) ? $stats['totalFiles']  : $stats['totalFiles'] / $stats['totalFolders'];
-        $stats['foldersPerUser'] = ($this->countUsers() == 0) ? $stats['totalFolders'] : $stats['totalFolders'] / $this->countUsers();
-        $stats['sharesPerUser'] = ($this->countUsers() == 0) ? $stats['totalShares'] : $stats['totalShares'] / $this->countUsers();
         $stats['sizePerUser'] = ($this->countUsers() == 0) ? $stats['totalSize'] : $stats['totalSize'] / $this->countUsers();
-        $stats['sizePerFile'] = ($stats['totalFiles'] == 0) ? $stats['totalSize'] : $stats['totalSize'] / $stats['totalFiles'];
-        $stats['sizePerFolder'] = ($stats['totalFolders'] == 0) ?  $stats['totalSize'] : $stats['totalSize'] / $stats['totalFolders'];
 
         // by groups
         if ($statsByGroup) {
             foreach(array_keys($stats['groups']) as $group) {
-                $stats['groups'][$group]['filesPerUser'] = ($stats['groups'][$group]['nbUsers'] == 0) ? $stats['groups'][$group]['nbFiles'] : $stats['groups'][$group]['nbFiles'] / $stats['groups'][$group]['nbUsers'];
-                $stats['groups'][$group]['filesPerFolder'] = ($stats['groups'][$group]['nbFolders'] == 0) ? $stats['groups'][$group]['nbFiles'] : $stats['groups'][$group]['nbFiles'] / $stats['groups'][$group]['nbFolders'];
-                $stats['groups'][$group]['foldersPerUser'] = ($stats['groups'][$group]['nbUsers'] == 0) ? $stats['groups'][$group]['nbFolders'] : $stats['groups'][$group]['nbFolders'] / $stats['groups'][$group]['nbUsers'];
-                $stats['groups'][$group]['sharesPerUser'] = ($stats['groups'][$group]['nbUsers'] == 0) ? $stats['groups'][$group]['nbShares'] : $stats['groups'][$group]['nbShares'] / $stats['groups'][$group]['nbUsers'];
                 $stats['groups'][$group]['sizePerUser'] = ($stats['groups'][$group]['nbUsers'] == 0) ? $stats['groups'][$group]['filesize'] : $stats['groups'][$group]['filesize'] / $stats['groups'][$group]['nbUsers'];
-                $stats['groups'][$group]['sizePerFile'] = ($stats['groups'][$group]['nbFiles'] == 0) ? $stats['groups'][$group]['filesize'] : $stats['groups'][$group]['filesize'] / $stats['groups'][$group]['nbFiles'];
-                $stats['groups'][$group]['sizePerFolder'] = ($stats['groups'][$group]['nbFolders'] == 0) ? $stats['groups'][$group]['filesize'] : $stats['groups'][$group]['filesize'] / $stats['groups'][$group]['nbFolders'];
             }
         }
-
-        // variance
-        //$stats['meanNbFilesPerUser'] = $nbFilesVariance->getMean();
-        $stats['stdvNbFilesPerUser'] = $nbFilesVariance->getStandardDeviation();
-        $stats['stdvNbFoldersPerUser'] = $nbFoldersVariance->getStandardDeviation();
-        $stats['stdvNbSharesPerUser'] = $nbSharesVariance->getStandardDeviation();
-
-        // don't send back 'users' details
-        //unset($stats['users']);
 
         return $stats;
     }
 
     /**
      * Get some user informations on files and folders
-     * @param \OC\Files\View $view
-     * @param string $path the path
+     * @param string $idUser
      * @param mixed $datas array to store the extrated infos
      */
-    protected function getFilesStat($view, $path='', &$datas) {
-        $dc = $view->getDirectoryContent($path);
-
-        foreach($dc as $item) {
-            if ($item->isShared()) {
-                continue;
-            }
-
-            // if folder, recurse
-            if ($item->getType() == \OCP\Files\FileInfo::TYPE_FOLDER) {
-                $datas['nbFolders']++;
-                $this->getFilesStat($view, $item->getPath(), $datas);
-            }
-            else {
-                $datas['nbFiles']++;
-                $datas['filesize'] += $item->getSize();
-            }
-        }
+    protected function getFilesStat($idUser, &$datas) {
+        $datas['filesize'] = $this->diskUsage($idUser);
     }
 
     /**
@@ -271,17 +180,26 @@ class StatService
         return '';
     }
 
-    protected function getSharesStats($owner) {
-        // $shares = \OCP\Share::getItemsSharedWithUser('file', 'admin');
-        $sharedFiles   = \OC\Share\Share::getItems('file', null, null, null, $owner, \OC\Share\Share::FORMAT_NONE, null, -1, false);
-// $f = fopen('/tmp/truc.log', 'a');
-// fputs($f, $owner . " : files\n");
-// fputs($f, print_r($sharedFiles, true) . "\n");
-        //  $sharedFolders = \OC\Share\Share::getItems('folder', null, null, null, $owner, \OC\Share\Share::FORMAT_NONE, null, -1, false);
-// fputs($f, $owner . " : folders\n");
-// fputs($f, print_r($sharedFolders, true) . "\n");
-// fclose($f);
+    /**
+     * Returns disk space used by a user
+     * @param  string $username (userId)
+     * @return array ['user_id', 'size']
+     */
+    public function diskUsage($username) {
+        $sql = "SELECT m.user_id, fc.size
+            FROM oc_mounts m, oc_filecache fc, oc_storages s
+            WHERE m.mount_point = CONCAT('/', :username, '/')
+                AND s.numeric_id = m.storage_id
+                AND fc.storage = m.storage_id
+                AND fc.path = 'files'";
 
-        return count($sharedFiles)/* + count($sharedFolders)*/;
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':username' => $username,
+        ]);
+
+        $row = $stmt->fetch();
+
+        return $row['size'];
     }
 }

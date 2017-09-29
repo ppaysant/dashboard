@@ -44,29 +44,15 @@ class HistoryService {
             'date',
             'totalUsedSpace',
             'nbUsers',
-            'nbFolders',
-            'nbFiles',
-            'nbShares',
             'sizePerUser',
-            'foldersPerUser',
-            'filesPerUser',
-            'sharesPerUser',
-            'sizePerFolder',
-            'filesPerFolder',
-            'sizePerFile',
         );
         $statName = array_merge($statNameByGroup, array(
             'defaultQuota',
-            'stdvFilesPerUser',
-            'stdvFoldersPerUser',
-            'stdvSharesPerUser',
             'completeDate',
         ));
         $humanReadable = array(
             'totalUsedSpace',
             'sizePerUser',
-            'sizePerFolder',
-            'sizePerFile',
         );
 
         $statsByGroup = false;

@@ -14,8 +14,8 @@ dashboard.config(['$httpProvider', function($httpProvider) {
 }]);
 
 dashboard.controller('statsController', ['$scope', 'statsService', 'groupsService', 'chartService', function($scope, statsService, groupsService, chartService) {
-    _dataTypes = ['totalUsedSpace', 'nbUsers', 'nbFolders', 'nbFiles', 'nbShares', 'sizePerUser', 'foldersPerUser', 'filesPerUser', 'sharesPerUser', 'sizePerFolder', 'filesPerFolder', 'sizePerFile', 'stdvFilesPerUser', 'stdvFoldersPerUser', 'stdvSharesPerUser'];
-    _dataTypesByGroup = ['totalUsedSpace', 'nbUsers', 'nbFolders', 'nbFiles', 'nbShares', 'sizePerUser', 'foldersPerUser', 'filesPerUser', 'sharesPerUser', 'sizePerFolder', 'filesPerFolder', 'sizePerFile'];
+    _dataTypes = ['totalUsedSpace', 'nbUsers', 'sizePerUser'];
+    _dataTypesByGroup = ['totalUsedSpace', 'nbUsers', 'sizePerUser'];
     $scope.dataTypes = _dataTypes;
     $scope.dataType = 'nbUsers';
 

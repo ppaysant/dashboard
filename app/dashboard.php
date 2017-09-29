@@ -73,7 +73,8 @@ class Dashboard extends App {
             return new StatService(
                 $c->query('UserManager'),
                 $c->query('RootStorage'),
-                $c->query('LoggerService')
+                $c->query('LoggerService'),
+                $c->query('ServerContainer')->getDatabaseConnection()
             );
         });
 

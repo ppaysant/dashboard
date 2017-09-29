@@ -24,7 +24,7 @@
 <div ng-app="dashboard" ng-controller="statsController">
 
 <div id="dashboard">
-    Dashboard
+    Dashboard (ultra) lite
 </div>
 
 <div id="container">
@@ -38,29 +38,6 @@
 <div id="users" class="dataBlock">
     <p class="header"><?php p($l->t('Users')); ?> <span>{{ stats.history.nbUsers }}</span></p>
     <p><?php p($l->t('Size / user')); ?>: <span>{{ stats.history.sizePerUser | humanFileSize }}</span></p>
-    <p><?php p($l->t('Files / user')); ?>: <span>{{ stats.history.filesPerUser | number:2 }} (<?php p($l->t('standard deviation')); ?>: {{ stats.history.stdvFilesPerUser | number:2 }})</span></p>
-    <p><?php p($l->t('Folders / user')); ?>: <span>{{ stats.history.foldersPerUser | number:2 }} (<?php p($l->t('standard deviation')); ?>: {{ stats.history.stdvFoldersPerUser | number:2 }})</span></p>
-</div>
-
-<div id="folders" class="dataBlock">
-    <p class="header"><?php p($l->t('Folders')); ?> <span>{{ stats.history.nbFolders }}</span></p>
-    <p><?php p($l->t('Size / folder')); ?>: <span>{{ stats.history.sizePerFolder | humanFileSize }}</span></p>
-    <p><?php p($l->t('Files / folder')); ?>: <span>{{ stats.history.filesPerFolder | number:2 }}</span></p>
-    <br>
-</div>
-
-<div id="files" class="dataBlock">
-    <p class="header"><?php p($l->t('Files')); ?> <span>{{ stats.history.nbFiles }}</span></p>
-    <p><?php p($l->t('Size / file')); ?>: <span>{{ stats.history.sizePerFile | humanFileSize }}</span></p>
-    <br>
-    <br>
-</div>
-
-<div id="shares" class="dataBlock">
-    <p class="header"><?php p($l->t('Shares')); ?> <span>{{ stats.history.nbShares }}</span></p>
-    <p><?php p($l->t('Shares / user')); ?>: <span>{{ stats.history.sharesPerUser | number:2 }}</span></p>
-    <p><?php p($l->t('Standard deviation')); ?>: <span>{{ stats.history.stdvFilesPerUser | number:2 }}</span></p>
-    <br>
 </div>
 
 <div class="history">
